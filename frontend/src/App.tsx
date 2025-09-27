@@ -1,28 +1,44 @@
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
-import './App.css'
-import Layout from './components/Layout'
-import ChurnAnalysis from './pages/ChurnAnalysis'
-import CustomerSegmentation from './pages/CustomerSegmentation'
-import Dashboard from './pages/Dashboard'
-import HighRiskCustomers from './pages/HighRiskCustomers'
-import InventoryManagement from './pages/InventoryManagement'
-import SalesForecasting from './pages/SalesForecasting'
+import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
+import Importance from './pages/churn/Importance'
+import ChurnLayout from './pages/churn/Layout'
+import Metrics from './pages/churn/Metrics'
+import TopChurners from './pages/churn/TopChurners'
+import CustomerSegments from './pages/CustomerSegments'
+import Forecast from './pages/Forecast'
+import TopProducts from './pages/TopProducts'
+import Trends from './pages/Trends'
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <Layout>
+    <div className="min-h-screen">
+      <header className="bg-white shadow sticky top-0 z-10">
+        <div className="container py-4 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">BNP Analytics Dashboard</h1>
+          <nav className="flex gap-4 text-sm">
+            <NavLink to="/forecast" className={({isActive}) => isActive ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'}>Forecast</NavLink>
+            <NavLink to="/top-products" className={({isActive}) => isActive ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'}>Top Products</NavLink>
+            <NavLink to="/trends" className={({isActive}) => isActive ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'}>Trends</NavLink>
+            <NavLink to="/segments" className={({isActive}) => isActive ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'}>Segments</NavLink>
+            <NavLink to="/churn" className={({isActive}) => isActive ? 'text-blue-600 font-medium' : 'text-gray-600 hover:text-blue-600'}>Churn</NavLink>
+          </nav>
+        </div>
+      </header>
+      <main className="container py-6">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/high-risk-customers" element={<HighRiskCustomers />} />
-          <Route path="/churn-analysis" element={<ChurnAnalysis />} />
-          <Route path="/customer-segmentation" element={<CustomerSegmentation />} />
-          <Route path="/sales-forecasting" element={<SalesForecasting />} />
-          <Route path="/inventory-management" element={<InventoryManagement />} />
+          <Route path="/" element={<Navigate to="/forecast" replace />} />
+          <Route path="/forecast" element={<Forecast />} />
+          <Route path="/top-products" element={<TopProducts />} />
+          <Route path="/trends" element={<Trends />} />
+          <Route path="/segments" element={<CustomerSegments />} />
+          <Route path="/churn" element={<ChurnLayout />}>
+            <Route index element={<Navigate to="metrics" replace />} />
+            <Route path="metrics" element={<Metrics />} />
+            <Route path="importance" element={<Importance />} />
+            <Route path="top-churners" element={<TopChurners />} />
+          </Route>
+          <Route path="*" element={<div>Not Found</div>} />
         </Routes>
-      </Layout>
-    </Router>
+      </main>
+    </div>
   )
 }
-
-export default App

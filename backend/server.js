@@ -12,18 +12,47 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes - Sales (FastAPI proxy)
+app.use('/', require('./routes/sales'));
+// Routes - Churn (FastAPI proxy)
+app.use('/churn', require('./routes/churn'));
 app.use('/api/churn', require('./routes/churn'));
-app.use('/api/sales', require('./routes/sales'));
-app.use('/api/customers', require('./routes/customers'));
-app.use('/api/inventory', require('./routes/inventory'));
+// Routes - Customer Segmentation (FastAPI customer.py proxy)
+app.use('/customer', require('./routes/customer'));
+app.use('/api/customer', require('./routes/customer'));
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'BNP Analytics API is running',
     timestamp: new Date().toISOString()
+  });
+});
+
+// Root route - helpful landing message
+app.get('/', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'BNP Backend is running',
+    tips: 'This server exposes REST endpoints under /api. See /api/health for status.',
+    endpoints: {
+      health: '/health',
+      sales: {
+        forecast: '/forecast',
+        topProducts: '/top-products',
+        trends: '/trends'
+      },
+      churn: {
+        metrics: '/churn/metrics',
+        importance: '/churn/importance',
+        topChurners: '/churn/top-churners'
+      },
+      customer: {
+        segments: '/customer/segments'
+      }
+    },
+    frontend: 'http://localhost:5173'
   });
 });
 

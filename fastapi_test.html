@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .endpoint { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .loading { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 BNP Paribas FastAPI Integration Test</h1>
+        <p>This page tests the integration between your Node.js backend and the trained FastAPI ML models.</p>
+        
+        <div class="endpoint" id="health-test">
+            <h3>📡 Health Check</h3>
+            <button onclick="testHealthCheck()">Test Health</button>
+            <div id="health-result"></div>
+        </div>
+        
+        <div class="endpoint" id="forecast-test">
+            <h3>📊 Sales Forecast</h3>
+            <button onclick="testForecast()">Test Forecast</button>
+            <div id="forecast-result"></div>
+        </div>
+        
+        <div class="endpoint" id="products-test">
+            <h3>📦 Top Products</h3>
+            <button onclick="testTopProducts()">Test Top Products</button>
+            <div id="products-result"></div>
+        </div>
+        
+        <div class="endpoint" id="trends-test">
+            <h3>📈 Sales Trends</h3>
+            <button onclick="testTrends()">Test Trends</button>
+            <div id="trends-result"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>🔧 Test All Endpoints</h3>
+            <button onclick="testAll()">Run All Tests</button>
+        </div>
+    </div>
+
+    <script>
+        const FASTAPI_BASE_URL = 'http://127.0.0.1:8000';
+        const API_KEY = 'mysecretapikey';
+
+        async function callAPI(endpoint, resultElementId) {
+            const resultElement = document.getElementById(resultElementId);
+            resultElement.innerHTML = '<div class="loading">⏳ Loading...</div>';
+            
+            try {
+                const response = await fetch(`${FASTAPI_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'x-api-key': API_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultElement.innerHTML = `
+                        <div class="success">
+                            ✅ Success! Status: ${response.status}
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultElement.innerHTML = `
+                        <div class="error">
+                            ❌ Error! Status: ${response.status}
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultElement.innerHTML = `
+                    <div class="error">
+                        ❌ Network Error: ${error.message}
+                        <br><small>Make sure FastAPI is running on http://127.0.0.1:8000</small>
+                    </div>
+                `;
+            }
+        }
+
+        async function testHealthCheck() {
+            await callAPI('/', 'health-result');
+        }
+
+        async function testForecast() {
+            await callAPI('/forecast', 'forecast-result');
+        }
+
+        async function testTopProducts() {
+            await callAPI('/top-products', 'products-result');
+        }
+
+        async function testTrends() {
+            await callAPI('/trends', 'trends-result');
+        }
+
+        async function testAll() {
+            await testHealthCheck();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testForecast();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testTopProducts();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testTrends();
+        }
+    </script>
+</body>
+</html>
