@@ -1,15 +1,15 @@
+import {
+    AlertTriangle,
+    BarChart3,
+    Home,
+    Menu,
+    Package,
+    TrendingUp,
+    Users,
+    X
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  BarChart3, 
-  Users, 
-  TrendingUp, 
-  Package, 
-  AlertTriangle,
-  Menu,
-  X,
-  Home
-} from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,6 +31,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       href: '/high-risk-customers',
       icon: AlertTriangle,
       description: 'Customers likely to churn'
+    },
+    {
+      name: 'Churn Analysis',
+      href: '/churn-analysis',
+      icon: BarChart3,
+      description: 'Model performance and feature insights'
     },
     {
       name: 'Customer Segmentation',

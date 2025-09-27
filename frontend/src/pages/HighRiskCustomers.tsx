@@ -1,5 +1,6 @@
 import { AlertTriangle, DollarSign, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import FilterControls from '../components/FilterControls';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MetricCard from '../components/MetricCard';
 import type { Customer } from '../types';
@@ -9,12 +10,17 @@ const HighRiskCustomers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [limitValue, setLimitValue] = useState(10);
 
   useEffect(() => {
     const fetchHighRiskCustomers = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getHighRiskCustomers();
+        const response = await apiService.getHighRiskCustomers({
+          limit: limitValue,
+          search: searchValue
+        });
         setCustomers(response.data);
       } catch (error) {
         console.error('Error fetching high-risk customers:', error);
@@ -24,7 +30,7 @@ const HighRiskCustomers: React.FC = () => {
     };
 
     fetchHighRiskCustomers();
-  }, []);
+  }, [limitValue, searchValue]);
 
   const getRiskLevelColor = (riskLevel: string) => {
     switch (riskLevel.toLowerCase()) {
@@ -72,6 +78,16 @@ const HighRiskCustomers: React.FC = () => {
         </div>
       </div>
 
+      {/* Filter Controls */}
+      <FilterControls
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        limitValue={limitValue}
+        onLimitChange={setLimitValue}
+        placeholder="Search customers by name, email, ID, or location..."
+        limitOptions={[10, 20, 50]}
+      />
+
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <MetricCard
@@ -100,9 +116,14 @@ const HighRiskCustomers: React.FC = () => {
       {/* Customer List */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Top 10 Customers at Risk</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Top {limitValue} Customers at Risk
+          </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Ranked by churn probability - click on a customer for more details
+            {searchValue ? 
+              `Filtered results for "${searchValue}" - ranked by churn probability` :
+              'Ranked by churn probability - click on a customer for more details'
+            }
           </p>
         </div>
         

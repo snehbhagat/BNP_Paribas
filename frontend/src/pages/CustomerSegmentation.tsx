@@ -1,6 +1,7 @@
 import { Eye, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import FilterControls from '../components/FilterControls';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MetricCard from '../components/MetricCard';
 import type { Customer, CustomerSegment } from '../types';
@@ -13,6 +14,8 @@ const CustomerSegmentation: React.FC = () => {
   const [selectedSegment, setSelectedSegment] = useState<CustomerSegment | null>(null);
   const [segmentCustomers, setSegmentCustomers] = useState<Customer[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(false);
+  const [customerSearchValue, setCustomerSearchValue] = useState('');
+  const [customerLimitValue, setCustomerLimitValue] = useState(20);
 
   useEffect(() => {
     const fetchSegmentData = async () => {
@@ -34,8 +37,13 @@ const CustomerSegmentation: React.FC = () => {
   const handleSegmentClick = async (segment: CustomerSegment) => {
     setSelectedSegment(segment);
     setLoadingCustomers(true);
+    // Reset search when changing segments
+    setCustomerSearchValue('');
     try {
-      const response = await apiService.getSegmentCustomers(segment.segmentId);
+      const response = await apiService.getSegmentCustomers(segment.segmentId, {
+        limit: customerLimitValue,
+        search: customerSearchValue
+      });
       setSegmentCustomers(response.data.customers);
     } catch (error) {
       console.error('Error fetching segment customers:', error);
@@ -43,6 +51,27 @@ const CustomerSegmentation: React.FC = () => {
       setLoadingCustomers(false);
     }
   };
+
+  // Fetch customers when search or limit changes for selected segment
+  useEffect(() => {
+    if (selectedSegment) {
+      setLoadingCustomers(true);
+      const fetchFilteredCustomers = async () => {
+        try {
+          const response = await apiService.getSegmentCustomers(selectedSegment.segmentId, {
+            limit: customerLimitValue,
+            search: customerSearchValue
+          });
+          setSegmentCustomers(response.data.customers);
+        } catch (error) {
+          console.error('Error fetching filtered segment customers:', error);
+        } finally {
+          setLoadingCustomers(false);
+        }
+      };
+      fetchFilteredCustomers();
+    }
+  }, [selectedSegment, customerSearchValue, customerLimitValue]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -132,7 +161,7 @@ const CustomerSegmentation: React.FC = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Average Spending by Segment</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={segments as any}>
+            <BarChart data={segments}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
               <YAxis />
@@ -294,6 +323,18 @@ const CustomerSegmentation: React.FC = () => {
                     <h4 className="text-md font-medium text-gray-900 mb-3">
                       Sample Customers ({segmentCustomers.length})
                     </h4>
+                    
+                    {/* Filter Controls for Customers */}
+                    <div className="mb-4">
+                      <FilterControls
+                        searchValue={customerSearchValue}
+                        onSearchChange={setCustomerSearchValue}
+                        limitValue={customerLimitValue}
+                        onLimitChange={setCustomerLimitValue}
+                        placeholder="Search customers by name, email, or ID..."
+                        limitOptions={[10, 20, 50]}
+                      />
+                    </div>
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
@@ -313,7 +354,7 @@ const CustomerSegmentation: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {segmentCustomers.slice(0, 10).map((customer) => (
+                          {segmentCustomers.map((customer) => (
                             <tr key={customer.customerId}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900">{customer.name}</div>

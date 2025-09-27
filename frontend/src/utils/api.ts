@@ -2,7 +2,7 @@ import axios from 'axios';
 import type {
     ApiResponse,
     ChurnPrediction,
-    ChurnTrend,
+    ChurnTrendsData,
     Customer,
     CustomerSegment,
     DemandForecast,
@@ -51,17 +51,15 @@ export const apiService = {
   },
 
   // Churn endpoints
-  getHighRiskCustomers: async (): Promise<ApiResponse<Customer[]>> => {
-    const response = await api.get('/churn/high-risk');
+  getHighRiskCustomers: async (params?: { 
+    limit?: number; 
+    search?: string; 
+  }): Promise<ApiResponse<Customer[]>> => {
+    const response = await api.get('/churn/high-risk', { params });
     return response.data;
   },
 
-  getChurnTrends: async (): Promise<ApiResponse<{
-    monthlyTrends: ChurnTrend[];
-    riskDistribution: Array<{ risk: string; count: number; percentage: number }>;
-    totalCustomers: number;
-    currentChurnRate: number;
-  }>> => {
+  getChurnTrends: async (): Promise<ApiResponse<ChurnTrendsData>> => {
     const response = await api.get('/churn/trends');
     return response.data;
   },
@@ -85,11 +83,20 @@ export const apiService = {
     return response.data;
   },
 
-  getSegmentCustomers: async (segmentId: string): Promise<ApiResponse<{
+  getSegmentCustomers: async (segmentId: string, params?: { 
+    limit?: number; 
+    search?: string; 
+  }): Promise<ApiResponse<{
     segment: CustomerSegment;
     customers: Customer[];
+    metadata?: {
+      total: number;
+      totalBeforeLimit: number;
+      limit: number;
+      search: string | null;
+    };
   }>> => {
-    const response = await api.get(`/customers/segments/${segmentId}`);
+    const response = await api.get(`/customers/segments/${segmentId}`, { params });
     return response.data;
   },
 
@@ -104,8 +111,12 @@ export const apiService = {
     return response.data;
   },
 
-  getTopProducts: async (): Promise<ApiResponse<ProductSales[]>> => {
-    const response = await api.get('/sales/top-products');
+  getTopProducts: async (params?: { 
+    limit?: number; 
+    search?: string; 
+    category?: string; 
+  }): Promise<ApiResponse<ProductSales[]>> => {
+    const response = await api.get('/sales/top-products', { params });
     return response.data;
   },
 
@@ -126,8 +137,12 @@ export const apiService = {
   },
 
   // Inventory management endpoints
-  getDemandForecast: async (): Promise<ApiResponse<DemandForecast>> => {
-    const response = await api.get('/inventory/demand-forecast');
+  getDemandForecast: async (params?: { 
+    limit?: number; 
+    search?: string; 
+    category?: string; 
+  }): Promise<ApiResponse<DemandForecast>> => {
+    const response = await api.get('/inventory/demand-forecast', { params });
     return response.data;
   },
 

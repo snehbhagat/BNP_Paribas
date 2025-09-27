@@ -1,6 +1,7 @@
 import { DollarSign, ShoppingCart, Target, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import FilterControls from '../components/FilterControls';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MetricCard from '../components/MetricCard';
 import type { ProductSales, SalesForecast } from '../types';
@@ -11,6 +12,11 @@ const SalesForecasting: React.FC = () => {
   const [forecast, setForecast] = useState<SalesForecast | null>(null);
   const [topProducts, setTopProducts] = useState<ProductSales[]>([]);
   const [salesTrends, setSalesTrends] = useState<any>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [limitValue, setLimitValue] = useState(10);
+  const [categoryValue, setCategoryValue] = useState('');
+
+  const categories = ['Electronics', 'Clothing', 'Home', 'Books', 'Sports'];
 
   useEffect(() => {
     const fetchSalesData = async () => {
@@ -19,7 +25,11 @@ const SalesForecasting: React.FC = () => {
         
         const [forecastResponse, productsResponse, trendsResponse] = await Promise.all([
           apiService.getSalesForecast(),
-          apiService.getTopProducts(),
+          apiService.getTopProducts({
+            limit: limitValue,
+            search: searchValue,
+            category: categoryValue
+          }),
           apiService.getSalesTrends()
         ]);
 
@@ -34,7 +44,7 @@ const SalesForecasting: React.FC = () => {
     };
 
     fetchSalesData();
-  }, []);
+  }, [limitValue, searchValue, categoryValue]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -82,6 +92,20 @@ const SalesForecasting: React.FC = () => {
         </div>
       </div>
 
+      {/* Filter Controls for Products */}
+      <FilterControls
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        limitValue={limitValue}
+        onLimitChange={setLimitValue}
+        categoryValue={categoryValue}
+        onCategoryChange={setCategoryValue}
+        categories={categories}
+        showCategory={true}
+        placeholder="Search products by name, ID, or category..."
+        limitOptions={[10, 20, 50]}
+      />
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <MetricCard
@@ -104,7 +128,7 @@ const SalesForecasting: React.FC = () => {
         />
         <MetricCard
           title="Top Product Revenue"
-          value={formatCurrency((topProducts[0]?.predictedSales || 0) * (topProducts[0]?.price || 0))}
+          value={formatCurrency(topProducts[0]?.predictedRevenue || 0)}
           icon={<ShoppingCart className="h-6 w-6 text-orange-600" />}
           subtitle={topProducts[0]?.name || 'N/A'}
         />
@@ -180,9 +204,14 @@ const SalesForecasting: React.FC = () => {
       {/* Top Products Table */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 mb-8">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Top 10 Products by Predicted Sales</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Top {limitValue} Products by Predicted Sales
+          </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Products with highest forecasted sales volume
+            {searchValue || categoryValue ? 
+              `Filtered results${searchValue ? ` for "${searchValue}"` : ''}${categoryValue ? ` in ${categoryValue}` : ''}` :
+              'Products with highest forecasted sales volume'
+            }
           </p>
         </div>
         
@@ -207,6 +236,9 @@ const SalesForecasting: React.FC = () => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Growth
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Confidence
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Stock Level
@@ -243,7 +275,7 @@ const SalesForecasting: React.FC = () => {
                     {formatCurrency(product.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                    {formatCurrency(product.predictedSales * product.price)}
+                    {formatCurrency(product.predictedRevenue || (product.predictedSales * product.price))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -253,6 +285,19 @@ const SalesForecasting: React.FC = () => {
                     }`}>
                       {product.salesGrowth > 0 ? '+' : ''}{formatPercentage(product.salesGrowth)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{ width: `${(product.confidence || 0.8) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm text-gray-900">
+                        {((product.confidence || 0.8) * 100).toFixed(0)}%
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

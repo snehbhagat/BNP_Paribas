@@ -1,6 +1,7 @@
 import { AlertTriangle, BarChart3, Package, TrendingDown, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import FilterControls from '../components/FilterControls';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MetricCard from '../components/MetricCard';
 import type { DemandForecast, InventoryProduct } from '../types';
@@ -10,6 +11,11 @@ const InventoryManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [demandForecast, setDemandForecast] = useState<DemandForecast | null>(null);
   const [optimization, setOptimization] = useState<any>(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [limitValue, setLimitValue] = useState(10);
+  const [categoryValue, setCategoryValue] = useState('');
+
+  const categories = ['Electronics', 'Clothing', 'Home', 'Books', 'Sports'];
 
   useEffect(() => {
     const fetchInventoryData = async () => {
@@ -17,7 +23,11 @@ const InventoryManagement: React.FC = () => {
         setLoading(true);
         
         const [forecastResponse, optimizationResponse] = await Promise.all([
-          apiService.getDemandForecast(),
+          apiService.getDemandForecast({
+            limit: limitValue,
+            search: searchValue,
+            category: categoryValue
+          }),
           apiService.getInventoryOptimization()
         ]);
 
@@ -31,7 +41,7 @@ const InventoryManagement: React.FC = () => {
     };
 
     fetchInventoryData();
-  }, []);
+  }, [limitValue, searchValue, categoryValue]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -101,6 +111,20 @@ const InventoryManagement: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Filter Controls */}
+      <FilterControls
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        limitValue={limitValue}
+        onLimitChange={setLimitValue}
+        categoryValue={categoryValue}
+        onCategoryChange={setCategoryValue}
+        categories={categories}
+        showCategory={true}
+        placeholder="Search products by name, ID, or category..."
+        limitOptions={[10, 20, 50]}
+      />
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -267,9 +291,14 @@ const InventoryManagement: React.FC = () => {
       {/* Top Demand Products */}
       <div className="bg-white shadow-sm rounded-lg border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Top Products by Predicted Demand</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Top {limitValue} Products by Predicted Demand
+          </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Products with highest forecasted demand
+            {searchValue || categoryValue ? 
+              `Filtered results${searchValue ? ` for "${searchValue}"` : ''}${categoryValue ? ` in ${categoryValue}` : ''}` :
+              'Products with highest forecasted demand'
+            }
           </p>
         </div>
         
